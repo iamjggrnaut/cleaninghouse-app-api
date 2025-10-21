@@ -25,6 +25,11 @@ export class EmailService {
           pass: process.env.SMTP_PASS,
         },
       });
+
+      console.log('📧 Email service: Production mode');
+      console.log(`📧 SMTP Host: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`);
+      console.log(`📧 SMTP User: ${process.env.SMTP_USER}`);
+      console.log(`📧 SMTP Secure: ${process.env.SMTP_SECURE}`);
     } else {
       // DEV: используем Ethereal (тестовый SMTP, письма не отправляются реально)
       // Или можно использовать Gmail для теста
