@@ -29,6 +29,10 @@ export class User {
   @Column({ nullable: true })
   city?: string;
 
+  // Статус для исполнителей (самозанятый/ИП)
+  @Column({ nullable: true })
+  status?: 'self_employed' | 'individual_entrepreneur';
+
   // Optional identity fields for contractor verification
   @Column({ nullable: true })
   citizenship?: string;

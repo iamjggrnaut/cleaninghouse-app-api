@@ -20,6 +20,7 @@ export class AuthService {
     email: string; 
     password: string; 
     role?: UserRole;
+    status?: 'self_employed' | 'individual_entrepreneur';
     citizenship?: string;
     passportSeries?: string;
     passportNumber?: string;
@@ -42,6 +43,7 @@ export class AuthService {
       email: data.email,
       role: data.role || UserRole.CUSTOMER,
       passwordHash: await bcrypt.hash(data.password, 10),
+      status: data.status, // Добавляем статус
       citizenship: data.citizenship && data.citizenship.trim() !== '' ? data.citizenship : null,
       passportSeries: data.passportSeries && data.passportSeries.trim() !== '' ? data.passportSeries : null,
       passportNumber: data.passportNumber && data.passportNumber.trim() !== '' ? data.passportNumber : null,
@@ -61,7 +63,7 @@ export class AuthService {
   async login(data: { email: string; password: string }) {
     const user = await this.usersRepo.findOne({
       where: { email: data.email },
-      select: ['id', 'email', 'phone', 'fullName', 'role', 'passwordHash', 'rating', 'reviewsCount', 'ordersCompleted'],
+      select: ['id', 'email', 'phone', 'fullName', 'role', 'passwordHash', 'rating', 'reviewsCount', 'ordersCompleted', 'avatar', 'city', 'status'],
     });
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const match = await bcrypt.compare(data.password, user.passwordHash);
@@ -73,9 +75,13 @@ export class AuthService {
   async refreshToken(refreshToken: string) {
     try {
       const payload = this.jwt.verify(refreshToken);
-      const user = await this.usersRepo.findOne({ where: { id: payload.userId } });
+      const user = await this.usersRepo.findOne({ 
+        where: { id: payload.userId },
+        select: ['id', 'email', 'phone', 'fullName', 'role', 'rating', 'reviewsCount', 'ordersCompleted', 'avatar', 'city', 'status', 'verified', 'createdAt', 'updatedAt', 'citizenship', 'passportSeries', 'passportNumber', 'passportIssuedBy', 'passportIssueDate', 'verificationDate', 'pushEnabled', 'pushToken', 'emailNotificationsEnabled', 'lastLoginAt']
+      });
       if (!user) throw new UnauthorizedException();
-      return this.issueTokens(user);
+      const tokens = this.issueTokens(user);
+      return { user, ...tokens };
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
