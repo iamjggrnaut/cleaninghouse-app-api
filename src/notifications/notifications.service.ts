@@ -198,15 +198,6 @@ export class NotificationsService {
     });
   }
 
-  async notifyPaymentFailed(orderId: string, customerId: string) {
-    await this.createNotification({
-      userId: customerId,
-      type: NotificationType.PAYMENT_FAILED,
-      title: 'Ошибка оплаты',
-      message: 'Не удалось провести платеж. Попробуйте еще раз.',
-      data: { orderId },
-    });
-  }
 
   async notifyPromo(userId: string, title: string, message: string) {
     await this.createNotification({

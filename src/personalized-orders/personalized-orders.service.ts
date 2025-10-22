@@ -114,7 +114,7 @@ export class PersonalizedOrdersService {
     // Отправляем уведомление заказчику
     await this.notificationsService.createNotification({
       userId: order.customer.id,
-      type: 'personalized_order_completed',
+      type: NotificationType.PERSONALIZED_ORDER_COMPLETED,
       title: 'Заказ завершен',
       message: `Исполнитель ${order.contractor.fullName} завершил ваш заказ`,
       data: {
@@ -147,7 +147,7 @@ export class PersonalizedOrdersService {
     // Отправляем уведомление исполнителю
     await this.notificationsService.createNotification({
       userId: order.contractor.id,
-      type: 'payment_hold_released',
+      type: NotificationType.PAYMENT_HOLD_RELEASED,
       title: 'Оплата получена',
       message: `Заказчик подтвердил завершение заказа. Оплата в размере ${order.contractorFee} руб. поступила на ваш счет`,
       data: {

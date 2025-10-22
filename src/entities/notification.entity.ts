@@ -27,6 +27,7 @@ export enum NotificationType {
   PERSONALIZED_ORDER_COMPLETED = 'personalized_order_completed',
   PAYMENT_HOLD_CREATED = 'payment_hold_created',
   PAYMENT_HOLD_RELEASED = 'payment_hold_released',
+  PAYMENT_RECEIVED = 'payment_received',
 }
 
 @Entity('notifications')

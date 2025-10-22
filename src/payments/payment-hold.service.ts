@@ -6,6 +6,7 @@ import { PersonalizedOrder } from '../entities/personalized-order.entity';
 import { User } from '../entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { YooKassaService } from './yookassa.service';
+import { NotificationType } from '../entities/notification.entity';
 
 @Injectable()
 export class PaymentHoldService {
@@ -78,14 +79,14 @@ export class PaymentHoldService {
       // Отправляем уведомление заказчику
       await this.notificationsService.createNotification({
         userId: personalizedOrder.customer.id,
-        type: 'payment_hold_created',
+        type: NotificationType.PAYMENT_HOLD_CREATED,
         title: 'Платеж заблокирован',
         message: `С вашей карты заблокирована сумма ${data.amount} руб. для заказа`,
         data: {
           holdId: savedHold.id,
           amount: data.amount,
           orderTitle: personalizedOrder.title,
-          paymentUrl: yooKassaPayment.confirmation?.confirmation_url,
+          paymentUrl: (yooKassaPayment as any).confirmation?.confirmation_url,
         },
       });
 
@@ -124,7 +125,7 @@ export class PaymentHoldService {
       // Отправляем уведомление заказчику
       await this.notificationsService.createNotification({
         userId: hold.customer.id,
-        type: 'payment_hold_released',
+        type: NotificationType.PAYMENT_HOLD_RELEASED,
         title: 'Платеж списан',
         message: `С вашей карты списана сумма ${hold.amount} руб. за выполненный заказ`,
         data: {
@@ -163,7 +164,7 @@ export class PaymentHoldService {
       // Отправляем уведомление заказчику
       await this.notificationsService.createNotification({
         userId: hold.customer.id,
-        type: 'payment_hold_released',
+        type: NotificationType.PAYMENT_HOLD_RELEASED,
         title: 'Платеж разблокирован',
         message: `Заблокированная сумма ${hold.amount} руб. возвращена на вашу карту`,
         data: {

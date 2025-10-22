@@ -66,7 +66,7 @@ export class InvitationsService {
     // Отправляем уведомление исполнителю
     await this.notificationsService.createNotification({
       userId: contractor.id,
-      type: 'invitation_received',
+      type: NotificationType.INVITATION_RECEIVED,
       title: 'Новое приглашение',
       message: `Заказчик ${customer.fullName} пригласил вас для выполнения заказа`,
       data: {
@@ -129,13 +129,13 @@ export class InvitationsService {
     await this.paymentHoldService.createHold({
       personalizedOrderId: invitation.personalizedOrderId,
       customerId: invitation.customer.id,
-      amount: personalizedOrder.budget,
+      amount: personalizedOrder?.budget || 0,
     });
 
     // Отправляем уведомление заказчику
     await this.notificationsService.createNotification({
       userId: invitation.customer.id,
-      type: 'invitation_accepted',
+      type: NotificationType.INVITATION_ACCEPTED,
       title: 'Приглашение принято',
       message: `Исполнитель ${invitation.contractor.fullName} принял ваше приглашение`,
       data: {
@@ -170,7 +170,7 @@ export class InvitationsService {
     // Отправляем уведомление заказчику
     await this.notificationsService.createNotification({
       userId: invitation.customer.id,
-      type: 'invitation_rejected',
+      type: NotificationType.INVITATION_REJECTED,
       title: 'Приглашение отклонено',
       message: `Исполнитель ${invitation.contractor.fullName} отклонил ваше приглашение. Причина: ${rejectionReason}`,
       data: {
@@ -205,7 +205,7 @@ export class InvitationsService {
     // Отправляем уведомление исполнителю
     await this.notificationsService.createNotification({
       userId: invitation.contractor.id,
-      type: 'invitation_cancelled',
+      type: NotificationType.INVITATION_CANCELLED,
       title: 'Приглашение отменено',
       message: `Заказчик ${invitation.customer.fullName} отменил приглашение`,
       data: {

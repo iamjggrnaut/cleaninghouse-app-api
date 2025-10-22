@@ -50,7 +50,7 @@ export class PaymentsService {
     const total = data.amount + commission;
 
     // Создаем платеж в YooKassa (hold)
-    const yookassaPayment = await this.yookassa.createPayment(
+    const yookassaPayment = await this.yookassa.createHold(
       total,
       `Оплата заказа #${order.id.substring(0, 8)}`,
       order.id,
@@ -108,7 +108,7 @@ export class PaymentsService {
         throw new Error('Payment ID not found');
       }
       
-      const yookassaPayment = await this.yookassa.capturePayment(
+      const yookassaPayment = await this.yookassa.captureHold(
         payment.yookassaPaymentId,
         payment.total,
       );
