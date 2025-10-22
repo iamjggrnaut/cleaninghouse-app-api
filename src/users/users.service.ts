@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
+import { User, UserRole } from '../entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -16,6 +16,13 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
     Object.assign(user, updates);
     return this.usersRepo.save(user);
+  }
+
+  async findSpecialists() {
+    return this.usersRepo.find({ 
+      where: { role: UserRole.CONTRACTOR },
+      select: ['id', 'fullName', 'email', 'phone', 'avatar', 'rating', 'ordersCompleted', 'city', 'verified', 'createdAt']
+    });
   }
 }
 

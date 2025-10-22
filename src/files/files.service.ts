@@ -7,13 +7,16 @@ import * as sharp from 'sharp';
 export class FilesService {
   private readonly staticPath = join(process.cwd(), 'static');
 
-  async processImage(filepath: string, category: string): Promise<string> {
+  async processImage(file: Express.Multer.File, category: string): Promise<string> {
     try {
-      const buffer = await fs.readFile(filepath);
-      const filename = filepath.split(/[\/\\]/).pop()!;
+      const buffer = file.buffer;
+      const filename = file.originalname;
       const nameWithoutExt = filename.replace(/\.(jpg|jpeg|png)$/i, '');
-      const webpFilename = `${nameWithoutExt}.webp`;
+      const webpFilename = `${nameWithoutExt}-${Date.now()}.webp`;
       const categoryPath = join(this.staticPath, category);
+
+      // Создаем директорию если не существует
+      await fs.mkdir(categoryPath, { recursive: true });
 
       // Настройки обработки в зависимости от категории
       let width = 1200;
@@ -29,7 +32,7 @@ export class FilesService {
         await sharp(buffer)
           .resize(200, 200, { fit: 'cover', position: 'center' })
           .webp({ quality: 80 })
-          .toFile(join(categoryPath, `${nameWithoutExt}-thumb.webp`));
+          .toFile(join(categoryPath, `${nameWithoutExt}-${Date.now()}-thumb.webp`));
       }
 
       if (category === 'orders' || category === 'reviews') {
@@ -50,9 +53,6 @@ export class FilesService {
         })
         .webp({ quality })
         .toFile(join(categoryPath, webpFilename));
-
-      // Удаляем оригинальный файл
-      await fs.unlink(filepath);
 
       return webpFilename;
     } catch (error) {

@@ -13,19 +13,7 @@ import { FilesController } from './files.controller';
       signOptions: { expiresIn: '7d' },
     }),
     MulterModule.register({
-      storage: diskStorage({
-        destination: (req, file, cb) => {
-          // Временная директория для загрузок
-          const uploadPath = join(process.cwd(), 'uploads');
-          cb(null, uploadPath);
-        },
-        filename: (req, file, cb) => {
-          // Генерируем уникальное имя файла
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          cb(null, `upload-${uniqueSuffix}${ext}`);
-        },
-      }),
+      storage: require('multer').memoryStorage(),
       limits: {
         fileSize: 5 * 1024 * 1024, // 5MB
       },

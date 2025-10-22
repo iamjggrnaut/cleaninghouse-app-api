@@ -38,7 +38,7 @@ export class FilesController {
     }
 
     // Обрабатываем изображение
-    const filename = await this.filesService.processImage(file.path, category);
+    const filename = await this.filesService.processImage(file, category);
     const url = this.filesService.getFileUrl(category, filename);
 
     return {

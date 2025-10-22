@@ -5,6 +5,7 @@ import { Notification } from '../entities/notification.entity';
 import { User } from '../entities/user.entity';
 import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
+import { PushModule } from '../push/push.module';
 
 @Global()
 @Module({
@@ -13,7 +14,8 @@ import { NotificationsController } from './notifications.controller';
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '7d' },
     }),
-    TypeOrmModule.forFeature([Notification, User])
+    TypeOrmModule.forFeature([Notification, User]),
+    PushModule
   ],
   providers: [NotificationsService],
   controllers: [NotificationsController],

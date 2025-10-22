@@ -25,6 +25,12 @@ export class UsersController {
     const user = await this.usersService.update(userId, { pushToken });
     return { success: true, data: { pushToken: user.pushToken } };
   }
+
+  @Get('specialists')
+  async getSpecialists() {
+    const specialists = await this.usersService.findSpecialists();
+    return { success: true, data: specialists };
+  }
 }
 
 
