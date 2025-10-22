@@ -60,7 +60,7 @@ export class EmailService {
       }
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || '"CleaningHouse" <noreply@cleaninghouse.ru>',
+        from: process.env.SMTP_FROM || '"CleaningHouse Premium" <noreply@cleaninghouse-premium.ru>',
         to: options.to,
         subject: options.subject,
         text: options.text,
