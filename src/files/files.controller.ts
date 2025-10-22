@@ -24,12 +24,14 @@ export class FilesController {
     @UploadedFile() file: Express.Multer.File,
     @Query('category') category?: string,
   ) {
+    console.log('📁 Upload request:', { hasFile: !!file, mimetype: file?.mimetype, size: file?.size, category });
+
     if (!file) {
-      throw new BadRequestException('No file uploaded');
+      throw new BadRequestException('No file uploaded (expected field name "file")');
     }
 
     if (!category) {
-      throw new BadRequestException('Category is required');
+      throw new BadRequestException('Category is required (avatars|orders|reviews|promos|portfolio)');
     }
 
     const allowedCategories = ['avatars', 'orders', 'reviews', 'promos', 'portfolio'];
@@ -38,17 +40,24 @@ export class FilesController {
     }
 
     // Обрабатываем изображение
-    const filename = await this.filesService.processImage(file, category);
-    const url = this.filesService.getFileUrl(category, filename);
+    try {
+      const filename = await this.filesService.processImage(file, category);
+      const url = this.filesService.getFileUrl(category, filename);
 
-    return {
-      success: true,
-      data: {
-        url,
-        filename,
-        category,
-      },
-    };
+      console.log('📁 Upload success:', { url, filename, category });
+
+      return {
+        success: true,
+        data: {
+          url,
+          filename,
+          category,
+        },
+      };
+    } catch (err: any) {
+      console.error('📁 Upload failed:', err?.message || err);
+      throw new BadRequestException(err?.message || 'Failed to upload image');
+    }
   }
 
   @Delete(':category/:filename')
