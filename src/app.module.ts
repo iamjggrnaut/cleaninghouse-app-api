@@ -12,6 +12,10 @@ import { OrderResponse } from './entities/order-response.entity';
 import { Review } from './entities/review.entity';
 import { Promo } from './entities/promo.entity';
 import { PaymentMethod } from './payments/payment-method.entity';
+// Новые сущности для приглашений
+import { Invitation } from './entities/invitation.entity';
+import { PersonalizedOrder } from './entities/personalized-order.entity';
+import { PaymentHold } from './entities/payment-hold.entity';
 
 // Modules
 import { UsersModule } from './users/users.module';
@@ -25,6 +29,9 @@ import { OrderResponsesModule } from './order-responses/order-responses.module';
 import { PushModule } from './push/push.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { PromosModule } from './promos/promos.module';
+// Новые модули для приглашений
+import { InvitationsModule } from './invitations/invitations.module';
+import { PersonalizedOrdersModule } from './personalized-orders/personalized-orders.module';
 
 @Module({
   imports: [
@@ -37,7 +44,7 @@ import { PromosModule } from './promos/promos.module';
         username: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASSWORD || 'React2022',
         database: process.env.DB_NAME || 'cleaninghouse',
-        entities: [User, Order, Notification, OrderResponse, Review, Promo, PaymentMethod],
+        entities: [User, Order, Notification, OrderResponse, Review, Promo, PaymentMethod, Invitation, PersonalizedOrder, PaymentHold],
         synchronize: true,
       }),
     }),
@@ -47,6 +54,9 @@ import { PromosModule } from './promos/promos.module';
     OrderResponsesModule,
     ReviewsModule,
     PromosModule,
+    // Новые модули для приглашений
+    InvitationsModule,
+    PersonalizedOrdersModule,
     UsersModule,
     OrdersModule,
     AuthModule,

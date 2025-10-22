@@ -117,5 +117,125 @@ export class PushService {
   isValidPushToken(token: string): boolean {
     return Expo.isExpoPushToken(token);
   }
+
+  /**
+   * Отправить push-уведомление о приглашении
+   */
+  async sendInvitationNotification(
+    pushToken: string,
+    customerName: string,
+    orderTitle: string,
+    data?: any,
+  ): Promise<boolean> {
+    return this.sendPushNotification(
+      pushToken,
+      'Новое приглашение',
+      `${customerName} пригласил вас для выполнения заказа: ${orderTitle}`,
+      { type: 'invitation', ...data }
+    );
+  }
+
+  /**
+   * Отправить push-уведомление о принятии приглашения
+   */
+  async sendInvitationAcceptedNotification(
+    pushToken: string,
+    contractorName: string,
+    orderTitle: string,
+    data?: any,
+  ): Promise<boolean> {
+    return this.sendPushNotification(
+      pushToken,
+      'Приглашение принято',
+      `${contractorName} принял ваше приглашение для заказа: ${orderTitle}`,
+      { type: 'invitation_accepted', ...data }
+    );
+  }
+
+  /**
+   * Отправить push-уведомление об отклонении приглашения
+   */
+  async sendInvitationRejectedNotification(
+    pushToken: string,
+    contractorName: string,
+    orderTitle: string,
+    reason: string,
+    data?: any,
+  ): Promise<boolean> {
+    return this.sendPushNotification(
+      pushToken,
+      'Приглашение отклонено',
+      `${contractorName} отклонил ваше приглашение. Причина: ${reason}`,
+      { type: 'invitation_rejected', reason, ...data }
+    );
+  }
+
+  /**
+   * Отправить push-уведомление о завершении персонализированного заказа
+   */
+  async sendPersonalizedOrderCompletedNotification(
+    pushToken: string,
+    contractorName: string,
+    orderTitle: string,
+    data?: any,
+  ): Promise<boolean> {
+    return this.sendPushNotification(
+      pushToken,
+      'Заказ завершен',
+      `${contractorName} завершил ваш заказ: ${orderTitle}. Подтвердите качество работы.`,
+      { type: 'personalized_order_completed', ...data }
+    );
+  }
+
+  /**
+   * Отправить push-уведомление о холде платежа
+   */
+  async sendPaymentHoldNotification(
+    pushToken: string,
+    amount: number,
+    orderTitle: string,
+    data?: any,
+  ): Promise<boolean> {
+    return this.sendPushNotification(
+      pushToken,
+      'Платеж заблокирован',
+      `С вашей карты заблокирована сумма ${amount} руб. для заказа: ${orderTitle}`,
+      { type: 'payment_hold', amount, ...data }
+    );
+  }
+
+  /**
+   * Отправить push-уведомление о списании платежа
+   */
+  async sendPaymentReleasedNotification(
+    pushToken: string,
+    amount: number,
+    orderTitle: string,
+    data?: any,
+  ): Promise<boolean> {
+    return this.sendPushNotification(
+      pushToken,
+      'Платеж списан',
+      `С вашей карты списана сумма ${amount} руб. за заказ: ${orderTitle}`,
+      { type: 'payment_released', amount, ...data }
+    );
+  }
+
+  /**
+   * Отправить push-уведомление о получении оплаты
+   */
+  async sendPaymentReceivedNotification(
+    pushToken: string,
+    amount: number,
+    orderTitle: string,
+    data?: any,
+  ): Promise<boolean> {
+    return this.sendPushNotification(
+      pushToken,
+      'Оплата получена',
+      `Вы получили оплату ${amount} руб. за заказ: ${orderTitle}`,
+      { type: 'payment_received', amount, ...data }
+    );
+  }
 }
 

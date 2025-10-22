@@ -18,6 +18,15 @@ export enum NotificationType {
   REVIEW_RECEIVED = 'review_received',
   PROMO = 'promo',
   SYSTEM = 'system',
+  // Новые типы для приглашений
+  INVITATION_RECEIVED = 'invitation_received',
+  INVITATION_ACCEPTED = 'invitation_accepted',
+  INVITATION_REJECTED = 'invitation_rejected',
+  INVITATION_CANCELLED = 'invitation_cancelled',
+  PERSONALIZED_ORDER_READY = 'personalized_order_ready',
+  PERSONALIZED_ORDER_COMPLETED = 'personalized_order_completed',
+  PAYMENT_HOLD_CREATED = 'payment_hold_created',
+  PAYMENT_HOLD_RELEASED = 'payment_hold_released',
 }
 
 @Entity('notifications')

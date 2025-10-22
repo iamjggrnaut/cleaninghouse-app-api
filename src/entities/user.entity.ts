@@ -6,6 +6,12 @@ export enum UserRole {
   CONTRACTOR = 'contractor',
 }
 
+export enum ContractorLevel {
+  SPECIALIST = 'specialist',
+  PROFESSIONAL = 'professional', 
+  EXPERT = 'expert',
+}
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -32,6 +38,10 @@ export class User {
   // Статус для исполнителей (самозанятый/ИП)
   @Column({ nullable: true })
   status?: 'self_employed' | 'individual_entrepreneur';
+
+  // Уровень исполнителя (специалист/профессионал/эксперт)
+  @Column({ type: 'enum', enum: ContractorLevel, default: ContractorLevel.SPECIALIST, nullable: true })
+  contractorLevel?: ContractorLevel;
 
   // Optional identity fields for contractor verification
   @Column({ nullable: true })

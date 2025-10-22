@@ -1,179 +1,209 @@
-import { Injectable } from '@nestjs/common';
-import { YooCheckout, ICreatePayment, ICapturePayment, Payment as IPayment } from '@a2seven/yoo-checkout';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+
+export interface YooKassaPayment {
+  id: string;
+  status: string;
+  amount: {
+    value: string;
+    currency: string;
+  };
+  created_at: string;
+  expires_at?: string;
+  metadata?: any;
+}
+
+export interface YooKassaHoldRequest {
+  amount: {
+    value: string;
+    currency: string;
+  };
+  confirmation: {
+    type: string;
+    return_url: string;
+  };
+  capture: boolean;
+  description: string;
+  metadata?: any;
+}
 
 @Injectable()
 export class YooKassaService {
-  private checkout: YooCheckout;
+  private readonly shopId: string;
+  private readonly secretKey: string;
+  private readonly baseUrl: string;
+  private readonly returnUrl: string;
 
-  constructor() {
-    const shopId = process.env.YOOKASSA_SHOP_ID || '1187292';
-    const secretKey = process.env.YOOKASSA_SECRET_KEY || 'test_KW0GVWw98vJfPNqJXkSY7vmup_j-Let-UXPr6RQZHdk';
-
-    this.checkout = new YooCheckout({
-      shopId,
-      secretKey,
-    });
-
-    console.log(`💳 YooKassa initialized (Shop ID: ${shopId}, Mode: ${shopId.includes('test') || secretKey.includes('test') ? 'TEST' : 'PRODUCTION'})`);
+  constructor(private configService: ConfigService) {
+    this.shopId = this.configService.get<string>('YOOKASSA_SHOP_ID') || '1187292';
+    this.secretKey = this.configService.get<string>('YOOKASSA_SECRET_KEY') || 'test_KW0GVWw98vJfPNqJXkSY7vmup_j-Let-UXPr6RQZHdk';
+    this.baseUrl = this.configService.get<string>('YOOKASSA_BASE_URL') || 'https://api.yookassa.ru/v3';
+    this.returnUrl = this.configService.get<string>('YOOKASSA_RETURN_URL') || 'https://app.cleaninghouse-premium.ru/payment/return';
   }
 
-  /**
-   * Создать платеж (hold - холдирование средств)
-   * @param amount - сумма в рублях
-   * @param description - описание платежа
-   * @param orderId - ID заказа (для metadata)
-   * @param returnUrl - URL для редиректа после оплаты
-   */
-  async createPayment(
-    amount: number,
-    description: string,
-    orderId: string,
-    returnUrl?: string,
-  ): Promise<IPayment> {
-    const idempotenceKey = `${orderId}-${Date.now()}`;
-
-    const createPayload: ICreatePayment = {
-      amount: {
-        value: amount.toFixed(2),
-        currency: 'RUB',
-      },
-      capture: false, // Холдирование (не списываем сразу)
-      confirmation: {
-        type: 'redirect',
-        return_url: returnUrl || 'https://cleaninghouse-premium.ru/payment/success',
-      },
-      description,
-      metadata: {
-        orderId,
-      },
-    };
-
+  // Создание холда платежа
+  async createHold(data: {
+    amount: number;
+    description: string;
+    metadata?: any;
+    expiresAt?: Date;
+  }): Promise<YooKassaPayment> {
     try {
-      const payment = await this.checkout.createPayment(createPayload, idempotenceKey);
-      console.log(`💳 YooKassa payment created: ${payment.id} (${amount}₽, hold)`);
-      return payment;
-    } catch (error) {
-      console.error('💳 YooKassa createPayment error:', error);
-      throw error;
-    }
-  }
+      const holdRequest: YooKassaHoldRequest = {
+        amount: {
+          value: data.amount.toFixed(2),
+          currency: 'RUB',
+        },
+        confirmation: {
+          type: 'redirect',
+          return_url: this.returnUrl,
+        },
+        capture: false, // Не списываем сразу, только холдим
+        description: data.description,
+        metadata: {
+          ...data.metadata,
+          type: 'hold',
+          created_at: new Date().toISOString(),
+        },
+      };
 
-  /**
-   * Списать средства (capture - подтверждение холда)
-   * @param paymentId - ID платежа в YooKassa
-   * @param amount - сумма для списания (может быть меньше холда)
-   */
-  async capturePayment(paymentId: string, amount?: number): Promise<IPayment> {
-    const idempotenceKey = `capture-${paymentId}-${Date.now()}`;
+      // Добавляем время истечения холда
+      if (data.expiresAt) {
+        holdRequest.metadata.expires_at = data.expiresAt.toISOString();
+      }
 
-    const capturePayload: ICapturePayment = amount
-      ? {
-          amount: {
-            value: amount.toFixed(2),
-            currency: 'RUB',
+      const response = await axios.post(
+        `${this.baseUrl}/payments`,
+        holdRequest,
+        {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${this.shopId}:${this.secretKey}`).toString('base64')}`,
+            'Content-Type': 'application/json',
+            'Idempotence-Key': `hold_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           },
         }
-      : {};
+      );
 
-    try {
-      const payment = await this.checkout.capturePayment(paymentId, capturePayload, idempotenceKey);
-      console.log(`💳 YooKassa payment captured: ${paymentId} (${payment.amount.value}₽)`);
-      return payment;
-    } catch (error) {
-      console.error('💳 YooKassa capturePayment error:', error);
-      throw error;
+      return response.data;
+    } catch (error: any) {
+      console.error('Ошибка создания холда в YooKassa:', error.response?.data || error.message);
+      throw new BadRequestException(`Ошибка создания холда: ${error.response?.data?.description || error.message}`);
     }
   }
 
-  /**
-   * Отменить платеж (cancel - отмена холда)
-   * @param paymentId - ID платежа в YooKassa
-   */
-  async cancelPayment(paymentId: string, idempotenceKey?: string): Promise<IPayment> {
-    const key = idempotenceKey || `cancel-${paymentId}-${Date.now()}`;
-
+  // Подтверждение холда (списание средств)
+  async captureHold(paymentId: string): Promise<YooKassaPayment> {
     try {
-      const payment = await this.checkout.cancelPayment(paymentId, key);
-      console.log(`💳 YooKassa payment cancelled: ${paymentId}`);
-      return payment;
-    } catch (error) {
-      console.error('💳 YooKassa cancelPayment error:', error);
-      throw error;
+      const response = await axios.post(
+        `${this.baseUrl}/payments/${paymentId}/capture`,
+        {},
+        {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${this.shopId}:${this.secretKey}`).toString('base64')}`,
+            'Content-Type': 'application/json',
+            'Idempotence-Key': `capture_${paymentId}_${Date.now()}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Ошибка подтверждения холда в YooKassa:', error.response?.data || error.message);
+      throw new BadRequestException(`Ошибка подтверждения холда: ${error.response?.data?.description || error.message}`);
     }
   }
 
-  /**
-   * Получить информацию о платеже
-   * @param paymentId - ID платежа в YooKassa
-   */
-  async getPayment(paymentId: string): Promise<IPayment> {
+  // Отмена холда (возврат средств)
+  async cancelHold(paymentId: string): Promise<YooKassaPayment> {
     try {
-      const payment = await this.checkout.getPayment(paymentId);
-      return payment;
-    } catch (error) {
-      console.error('💳 YooKassa getPayment error:', error);
-      throw error;
+      const response = await axios.post(
+        `${this.baseUrl}/payments/${paymentId}/cancel`,
+        {},
+        {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${this.shopId}:${this.secretKey}`).toString('base64')}`,
+            'Content-Type': 'application/json',
+            'Idempotence-Key': `cancel_${paymentId}_${Date.now()}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Ошибка отмены холда в YooKassa:', error.response?.data || error.message);
+      throw new BadRequestException(`Ошибка отмены холда: ${error.response?.data?.description || error.message}`);
     }
   }
 
-  /**
-   * Создать выплату исполнителю (SBP или на карту)
-   * @param amount - сумма выплаты
-   * @param payoutToken - токен выплаты (карта/счет исполнителя)
-   * @param description - описание выплаты
-   */
-  async createPayout(
-    amount: number,
-    payoutToken: string,
-    description: string,
-  ): Promise<any> {
-    const idempotenceKey = `payout-${Date.now()}`;
+  // Получение информации о платеже
+  async getPayment(paymentId: string): Promise<YooKassaPayment> {
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/payments/${paymentId}`,
+        {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${this.shopId}:${this.secretKey}`).toString('base64')}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-    const payoutPayload = {
-      amount: {
-        value: amount.toFixed(2),
-        currency: 'RUB',
-      },
-      payout_destination_data: {
-        type: 'bank_card',
-        card: {
-          number: payoutToken, // или используем сохраненный payment_method_id
+      return response.data;
+    } catch (error: any) {
+      console.error('Ошибка получения платежа из YooKassa:', error.response?.data || error.message);
+      throw new BadRequestException(`Ошибка получения платежа: ${error.response?.data?.description || error.message}`);
+    }
+  }
+
+  // Создание возврата
+  async createRefund(data: {
+    paymentId: string;
+    amount: number;
+    description: string;
+  }): Promise<any> {
+    try {
+      const refundRequest = {
+        amount: {
+          value: data.amount.toFixed(2),
+          currency: 'RUB',
         },
-      },
-      description,
-      metadata: {
-        type: 'contractor_payout',
-      },
-    };
+        payment_id: data.paymentId,
+        description: data.description,
+      };
 
-    try {
-      // Примечание: для выплат нужен отдельный API endpoint
-      // В SDK @a2seven/yoo-checkout выплаты могут быть не реализованы
-      // Используем прямой HTTP запрос к API YooKassa
-      console.log(`💸 YooKassa payout request: ${amount}₽ to ${payoutToken}`);
-      // TODO: Implement direct API call for payouts
-      return { success: true, amount, payoutToken };
-    } catch (error) {
-      console.error('💸 YooKassa createPayout error:', error);
-      throw error;
+      const response = await axios.post(
+        `${this.baseUrl}/refunds`,
+        refundRequest,
+        {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${this.shopId}:${this.secretKey}`).toString('base64')}`,
+            'Content-Type': 'application/json',
+            'Idempotence-Key': `refund_${data.paymentId}_${Date.now()}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Ошибка создания возврата в YooKassa:', error.response?.data || error.message);
+      throw new BadRequestException(`Ошибка создания возврата: ${error.response?.data?.description || error.message}`);
     }
   }
 
-  /**
-   * Сохранить платежный метод (карту)
-   * Возвращает payment_method_id для последующих платежей
-   */
-  async savePaymentMethod(
-    customerId: string,
-    paymentMethodId: string,
-  ): Promise<any> {
-    // YooKassa автоматически сохраняет карты при первом платеже
-    // Здесь мы просто возвращаем данные для хранения в БД
-    return {
-      paymentMethodId,
-      customerId,
-      savedAt: new Date(),
-    };
+  // Проверка статуса платежа
+  isPaymentSuccessful(payment: YooKassaPayment): boolean {
+    return payment.status === 'succeeded';
+  }
+
+  // Проверка статуса холда
+  isHoldActive(payment: YooKassaPayment): boolean {
+    return payment.status === 'waiting_for_capture';
+  }
+
+  // Проверка истечения холда
+  isHoldExpired(payment: YooKassaPayment): boolean {
+    if (!payment.expires_at) return false;
+    return new Date(payment.expires_at) < new Date();
   }
 }
-

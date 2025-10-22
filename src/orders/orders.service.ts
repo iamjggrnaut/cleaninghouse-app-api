@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Order } from '../entities/order.entity';
 import { User } from '../entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class OrdersService {
@@ -11,6 +12,7 @@ export class OrdersService {
     @InjectRepository(Order) private readonly ordersRepo: Repository<Order>,
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
     private readonly notificationsService: NotificationsService,
+    private readonly usersService: UsersService,
   ) {}
 
   findAll() {
@@ -46,6 +48,9 @@ export class OrdersService {
     if (!order.contractor || order.contractor.id !== contractorId) throw new Error('Not allowed');
     order.contractorCompleted = true;
     const savedOrder = await this.ordersRepo.save(order);
+    
+    // Увеличиваем счетчик выполненных заказов и обновляем уровень исполнителя
+    await this.usersService.incrementOrdersCompleted(contractorId);
     
     // Уведомление клиенту о завершении заказа исполнителем
     await this.notificationsService.notifyOrderCompleted(
