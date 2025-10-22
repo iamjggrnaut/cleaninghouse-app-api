@@ -21,12 +21,26 @@ export class AuthService {
     password: string; 
     role?: UserRole;
     status?: 'self_employed' | 'individual_entrepreneur';
+    city?: string;
     citizenship?: string;
     passportSeries?: string;
     passportNumber?: string;
     passportIssuedBy?: string;
     passportIssueDate?: string;
   }) {
+    console.log('🔍 AuthService.register: Получены данные для регистрации:', {
+      fullName: data.fullName,
+      phone: data.phone,
+      email: data.email,
+      role: data.role,
+      status: data.status,
+      city: data.city,
+      citizenship: data.citizenship,
+      passportSeries: data.passportSeries,
+      passportNumber: data.passportNumber,
+      passportIssuedBy: data.passportIssuedBy,
+      passportIssueDate: data.passportIssueDate
+    });
     // Проверяем существующих пользователей по email и телефону отдельно
     const existingByEmail = await this.usersRepo.findOne({ where: { email: data.email } });
     if (existingByEmail) {
@@ -44,6 +58,7 @@ export class AuthService {
       role: data.role || UserRole.CUSTOMER,
       passwordHash: await bcrypt.hash(data.password, 10),
       status: data.status, // Добавляем статус
+      city: data.city && data.city.trim() !== '' ? data.city : null, // Добавляем город
       citizenship: data.citizenship && data.citizenship.trim() !== '' ? data.citizenship : null,
       passportSeries: data.passportSeries && data.passportSeries.trim() !== '' ? data.passportSeries : null,
       passportNumber: data.passportNumber && data.passportNumber.trim() !== '' ? data.passportNumber : null,
@@ -52,6 +67,20 @@ export class AuthService {
     } as any);
     const savedUser = await this.usersRepo.save(user);
     const userEntity = Array.isArray(savedUser) ? savedUser[0] : savedUser;
+    
+    console.log('✅ AuthService.register: Пользователь создан:', {
+      id: userEntity.id,
+      fullName: userEntity.fullName,
+      email: userEntity.email,
+      role: userEntity.role,
+      status: userEntity.status,
+      city: userEntity.city,
+      citizenship: userEntity.citizenship,
+      passportSeries: userEntity.passportSeries,
+      passportNumber: userEntity.passportNumber,
+      passportIssuedBy: userEntity.passportIssuedBy,
+      passportIssueDate: userEntity.passportIssueDate
+    });
     
     // Отправляем приветственное письмо
     await this.emailService.sendWelcomeEmail(data.email, data.fullName);
