@@ -5,6 +5,7 @@ import { PersonalizedOrder, PersonalizedOrderStatus } from '../entities/personal
 import { User } from '../entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentHoldService } from '../payments/payment-hold.service';
+import { NotificationType } from '../entities/notification.entity';
 
 @Injectable()
 export class PersonalizedOrdersService {

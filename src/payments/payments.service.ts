@@ -50,12 +50,12 @@ export class PaymentsService {
     const total = data.amount + commission;
 
     // Создаем платеж в YooKassa (hold)
-    const yookassaPayment = await this.yookassa.createHold(
-      total,
-      `Оплата заказа #${order.id.substring(0, 8)}`,
-      order.id,
-      process.env.PAYMENT_RETURN_URL || 'https://cleaninghouse-premium.ru/payment/success',
-    );
+    const yookassaPayment = await this.yookassa.createHold({
+      amount: total,
+      description: `Оплата заказа #${order.id.substring(0, 8)}`,
+      metadata: { orderId: order.id },
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 дней
+    });
 
     const payment = this.paymentsRepo.create({
       order,
@@ -65,7 +65,7 @@ export class PaymentsService {
       total,
       status: PaymentStatus.PENDING,
       yookassaPaymentId: yookassaPayment.id,
-      yookassaConfirmationUrl: yookassaPayment.confirmation?.confirmation_url || undefined,
+      yookassaConfirmationUrl: (yookassaPayment as any).confirmation?.confirmation_url || undefined,
     });
     
     return this.paymentsRepo.save(payment) as unknown as Payment;
@@ -110,7 +110,6 @@ export class PaymentsService {
       
       const yookassaPayment = await this.yookassa.captureHold(
         payment.yookassaPaymentId,
-        payment.total,
       );
 
       payment.status = PaymentStatus.SUCCEEDED;
