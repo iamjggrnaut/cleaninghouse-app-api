@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { User } from '../entities/user.entity';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { AuthController } from './auth.controller';
       secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
       signOptions: { expiresIn: '1h' },
     }),
+    EmailModule,
   ],
   providers: [AuthService],
   controllers: [AuthController],

@@ -6,6 +6,7 @@ import { User } from '../entities/user.entity';
 import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
 import { PushModule } from '../push/push.module';
+import { EmailModule } from '../email/email.module';
 
 @Global()
 @Module({
@@ -15,7 +16,8 @@ import { PushModule } from '../push/push.module';
       signOptions: { expiresIn: '7d' },
     }),
     TypeOrmModule.forFeature([Notification, User]),
-    PushModule
+    PushModule,
+    EmailModule,
   ],
   providers: [NotificationsService],
   controllers: [NotificationsController],
