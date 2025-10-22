@@ -38,11 +38,16 @@ export class AuthService {
   async login(data: { email: string; password: string }) {
     const user = await this.usersRepo.findOne({
       where: { email: data.email },
-      select: ['id', 'email', 'phone', 'fullName', 'role', 'passwordHash', 'rating', 'reviewsCount', 'ordersCompleted'],
+      select: ['id', 'email', 'phone', 'fullName', 'role', 'passwordHash', 'rating', 'reviewsCount', 'ordersCompleted', 'avatar', 'city', 'verified', 'createdAt', 'updatedAt', 'citizenship', 'passportSeries', 'passportNumber', 'passportIssuedBy', 'passportIssueDate', 'verificationDate', 'pushEnabled', 'pushToken', 'emailNotificationsEnabled', 'lastLoginAt'],
     });
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const match = await bcrypt.compare(data.password, user.passwordHash);
     if (!match) throw new UnauthorizedException('Invalid credentials');
+    
+    // Обновляем время последнего входа
+    await this.usersRepo.update(user.id, { lastLoginAt: new Date() });
+    user.lastLoginAt = new Date();
+    
     const tokens = this.issueTokens(user);
     return { user, ...tokens };
   }
@@ -50,9 +55,13 @@ export class AuthService {
   async refreshToken(refreshToken: string) {
     try {
       const payload = this.jwt.verify(refreshToken);
-      const user = await this.usersRepo.findOne({ where: { id: payload.userId } });
+      const user = await this.usersRepo.findOne({ 
+        where: { id: payload.userId },
+        select: ['id', 'email', 'phone', 'fullName', 'role', 'rating', 'reviewsCount', 'ordersCompleted', 'avatar', 'city', 'verified', 'createdAt', 'updatedAt', 'citizenship', 'passportSeries', 'passportNumber', 'passportIssuedBy', 'passportIssueDate', 'verificationDate', 'pushEnabled', 'pushToken', 'emailNotificationsEnabled', 'lastLoginAt']
+      });
       if (!user) throw new UnauthorizedException();
-      return this.issueTokens(user);
+      const tokens = this.issueTokens(user);
+      return { user, ...tokens };
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }

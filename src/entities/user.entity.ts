@@ -72,6 +72,9 @@ export class User {
   @Column({ default: true })
   emailNotificationsEnabled!: boolean;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  lastLoginAt?: Date;
+
   @CreateDateColumn()
   createdAt!: Date;
 
