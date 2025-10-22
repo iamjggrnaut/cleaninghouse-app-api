@@ -14,10 +14,27 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
-  async register(data: { fullName: string; phone: string; email: string; password: string; role?: UserRole }) {
-    const existing = await this.usersRepo.findOne({ where: [{ phone: data.phone }, { email: data.email }] });
-    if (existing) {
-      throw new UnauthorizedException('User already exists');
+  async register(data: { 
+    fullName: string; 
+    phone: string; 
+    email: string; 
+    password: string; 
+    role?: UserRole;
+    citizenship?: string;
+    passportSeries?: string;
+    passportNumber?: string;
+    passportIssuedBy?: string;
+    passportIssueDate?: string;
+  }) {
+    // Проверяем существующих пользователей по email и телефону отдельно
+    const existingByEmail = await this.usersRepo.findOne({ where: { email: data.email } });
+    if (existingByEmail) {
+      throw new UnauthorizedException('Пользователь с таким email уже существует');
+    }
+    
+    const existingByPhone = await this.usersRepo.findOne({ where: { phone: data.phone } });
+    if (existingByPhone) {
+      throw new UnauthorizedException('Пользователь с таким номером телефона уже существует');
     }
     const user = this.usersRepo.create({
       fullName: data.fullName,
@@ -25,6 +42,11 @@ export class AuthService {
       email: data.email,
       role: data.role || UserRole.CUSTOMER,
       passwordHash: await bcrypt.hash(data.password, 10),
+      citizenship: data.citizenship,
+      passportSeries: data.passportSeries,
+      passportNumber: data.passportNumber,
+      passportIssuedBy: data.passportIssuedBy,
+      passportIssueDate: data.passportIssueDate,
     });
     await this.usersRepo.save(user);
     
@@ -38,16 +60,11 @@ export class AuthService {
   async login(data: { email: string; password: string }) {
     const user = await this.usersRepo.findOne({
       where: { email: data.email },
-      select: ['id', 'email', 'phone', 'fullName', 'role', 'passwordHash', 'rating', 'reviewsCount', 'ordersCompleted', 'avatar', 'city', 'verified', 'createdAt', 'updatedAt', 'citizenship', 'passportSeries', 'passportNumber', 'passportIssuedBy', 'passportIssueDate', 'verificationDate', 'pushEnabled', 'pushToken', 'emailNotificationsEnabled', 'lastLoginAt'],
+      select: ['id', 'email', 'phone', 'fullName', 'role', 'passwordHash', 'rating', 'reviewsCount', 'ordersCompleted'],
     });
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const match = await bcrypt.compare(data.password, user.passwordHash);
     if (!match) throw new UnauthorizedException('Invalid credentials');
-    
-    // Обновляем время последнего входа
-    await this.usersRepo.update(user.id, { lastLoginAt: new Date() });
-    user.lastLoginAt = new Date();
-    
     const tokens = this.issueTokens(user);
     return { user, ...tokens };
   }
@@ -55,13 +72,9 @@ export class AuthService {
   async refreshToken(refreshToken: string) {
     try {
       const payload = this.jwt.verify(refreshToken);
-      const user = await this.usersRepo.findOne({ 
-        where: { id: payload.userId },
-        select: ['id', 'email', 'phone', 'fullName', 'role', 'rating', 'reviewsCount', 'ordersCompleted', 'avatar', 'city', 'verified', 'createdAt', 'updatedAt', 'citizenship', 'passportSeries', 'passportNumber', 'passportIssuedBy', 'passportIssueDate', 'verificationDate', 'pushEnabled', 'pushToken', 'emailNotificationsEnabled', 'lastLoginAt']
-      });
+      const user = await this.usersRepo.findOne({ where: { id: payload.userId } });
       if (!user) throw new UnauthorizedException();
-      const tokens = this.issueTokens(user);
-      return { user, ...tokens };
+      return this.issueTokens(user);
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -101,30 +114,42 @@ export class AuthService {
 
     const isDev = process.env.NODE_ENV !== 'production';
     console.log(`📧 [${type}] Code for ${email}: ${code}`);
+    console.log(`⏰ Код действителен до: ${new Date(expiresAt).toLocaleString()}`);
     
     return { sent: true, devCode: isDev ? code : undefined } as any;
   }
 
   async verifyCode(email: string, code: string, type: 'registration' | 'reset' = 'registration') {
+    console.log(`🔐 Проверяем код для ${email}: ${code} (тип: ${type})`);
+    
     const entry = this.codes.get(email);
     
     if (!entry) {
+      console.log(`❌ Код не найден для ${email}`);
       throw new UnauthorizedException('Code not found. Please request a new code.');
     }
 
+    console.log(`📋 Найденный код: ${entry.code}, истекает: ${new Date(entry.expiresAt).toLocaleString()}`);
+    console.log(`⏰ Текущее время: ${new Date().toLocaleString()}`);
+    console.log(`⏰ Код действителен: ${entry.expiresAt > Date.now()}`);
+
     if (entry.expiresAt < Date.now()) {
+      console.log(`❌ Код истек для ${email}`);
       this.codes.delete(email);
       throw new UnauthorizedException('Code expired. Please request a new code.');
     }
 
     if (entry.code !== code) {
+      console.log(`❌ Неправильный код для ${email}. Ожидался: ${entry.code}, получен: ${code}`);
       throw new UnauthorizedException('Invalid code');
     }
 
     if (entry.type !== type) {
+      console.log(`❌ Неправильный тип кода для ${email}. Ожидался: ${entry.type}, получен: ${type}`);
       throw new UnauthorizedException('Invalid code type');
     }
 
+    console.log(`✅ Код подтвержден для ${email}`);
     this.codes.delete(email);
     return { verified: true };
   }
