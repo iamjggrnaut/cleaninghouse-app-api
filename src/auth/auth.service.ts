@@ -42,19 +42,20 @@ export class AuthService {
       email: data.email,
       role: data.role || UserRole.CUSTOMER,
       passwordHash: await bcrypt.hash(data.password, 10),
-      citizenship: data.citizenship,
-      passportSeries: data.passportSeries,
-      passportNumber: data.passportNumber,
-      passportIssuedBy: data.passportIssuedBy,
-      passportIssueDate: data.passportIssueDate,
-    });
-    await this.usersRepo.save(user);
+      citizenship: data.citizenship && data.citizenship.trim() !== '' ? data.citizenship : null,
+      passportSeries: data.passportSeries && data.passportSeries.trim() !== '' ? data.passportSeries : null,
+      passportNumber: data.passportNumber && data.passportNumber.trim() !== '' ? data.passportNumber : null,
+      passportIssuedBy: data.passportIssuedBy && data.passportIssuedBy.trim() !== '' ? data.passportIssuedBy : null,
+      passportIssueDate: data.passportIssueDate && data.passportIssueDate.trim() !== '' ? data.passportIssueDate : null,
+    } as any);
+    const savedUser = await this.usersRepo.save(user);
+    const userEntity = Array.isArray(savedUser) ? savedUser[0] : savedUser;
     
     // Отправляем приветственное письмо
     await this.emailService.sendWelcomeEmail(data.email, data.fullName);
     
-    const tokens = this.issueTokens(user);
-    return { user, ...tokens };
+    const tokens = this.issueTokens(userEntity);
+    return { user: userEntity, ...tokens };
   }
 
   async login(data: { email: string; password: string }) {
