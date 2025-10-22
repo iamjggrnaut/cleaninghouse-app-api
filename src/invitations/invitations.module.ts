@@ -16,7 +16,7 @@ import { JwtModule } from '@nestjs/jwt';
     PaymentsModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
-      signOptions: { expiresIn: '7d' } },
+      signOptions: { expiresIn: '7d' },
     }),
   ],
   controllers: [InvitationsController],
