@@ -6,16 +6,16 @@ import { Invitation } from '../entities/invitation.entity';
 import { PersonalizedOrder } from '../entities/personalized-order.entity';
 import { User } from '../entities/user.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { PaymentHoldService } from '../payments/payment-hold.service';
-import { PaymentHold } from '../entities/payment-hold.entity';
+import { PaymentsModule } from '../payments/payments.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Invitation, PersonalizedOrder, User, PaymentHold]),
+    TypeOrmModule.forFeature([Invitation, PersonalizedOrder, User]),
     NotificationsModule,
+    PaymentsModule,
   ],
   controllers: [InvitationsController],
-  providers: [InvitationsService, PaymentHoldService],
+  providers: [InvitationsService],
   exports: [InvitationsService],
 })
 export class InvitationsModule {}

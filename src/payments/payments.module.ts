@@ -13,6 +13,7 @@ import { Order } from '../entities/order.entity';
 import { User } from '../entities/user.entity';
 import { PaymentHold } from '../entities/payment-hold.entity';
 import { PersonalizedOrder } from '../entities/personalized-order.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { PersonalizedOrder } from '../entities/personalized-order.entity';
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '7d' },
     }),
-    TypeOrmModule.forFeature([Payment, Payout, PaymentMethod, Transaction, Order, User, PaymentHold, PersonalizedOrder])
+    TypeOrmModule.forFeature([Payment, Payout, PaymentMethod, Transaction, Order, User, PaymentHold, PersonalizedOrder]),
+    NotificationsModule,
   ],
   providers: [PaymentsService, YooKassaService, PaymentHoldService],
   controllers: [PaymentsController],
