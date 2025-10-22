@@ -11,6 +11,7 @@ import { Notification } from './entities/notification.entity';
 import { OrderResponse } from './entities/order-response.entity';
 import { Review } from './entities/review.entity';
 import { Promo } from './entities/promo.entity';
+import { PaymentMethod } from './payments/payment-method.entity';
 
 // Modules
 import { UsersModule } from './users/users.module';
@@ -36,7 +37,7 @@ import { PromosModule } from './promos/promos.module';
         username: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASSWORD || 'React2022',
         database: process.env.DB_NAME || 'cleaninghouse',
-        entities: [User, Order, Notification, OrderResponse, Review, Promo],
+        entities: [User, Order, Notification, OrderResponse, Review, Promo, PaymentMethod],
         synchronize: true,
       }),
     }),
