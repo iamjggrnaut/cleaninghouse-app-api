@@ -59,8 +59,8 @@ export class AuthService {
   }
 
   private issueTokens(user: User) {
-    const payload = { userId: user.id, role: user.role };
-    const accessToken = this.jwt.sign(payload, { expiresIn: '15m' });
+    const payload = { sub: user.id, userId: user.id, role: user.role };
+    const accessToken = this.jwt.sign(payload, { expiresIn: '1h' });
     const refreshToken = this.jwt.sign(payload, { expiresIn: '7d' });
     return { accessToken, refreshToken };
   }
