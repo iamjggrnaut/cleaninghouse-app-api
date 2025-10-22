@@ -6,6 +6,12 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('specialists')
+  async getSpecialists() {
+    const specialists = await this.usersService.findSpecialists();
+    return { success: true, data: specialists };
+  }
+
   @Get(':id')
   getOne(@Param('id') id: string) {
     return this.usersService.findById(id).then((data) => ({ success: true, data }));
@@ -24,12 +30,6 @@ export class UsersController {
     const userId = req.user.userId;
     const user = await this.usersService.update(userId, { pushToken });
     return { success: true, data: { pushToken: user.pushToken } };
-  }
-
-  @Get('specialists')
-  async getSpecialists() {
-    const specialists = await this.usersService.findSpecialists();
-    return { success: true, data: specialists };
   }
 }
 
