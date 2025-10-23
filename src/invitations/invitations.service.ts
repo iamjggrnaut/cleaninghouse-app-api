@@ -82,26 +82,20 @@ export class InvitationsService {
 
   // Получение приглашений для исполнителя
   async getContractorInvitations(contractorId: string) {
-    const invitations = await this.invitationsRepo.find({
+    return this.invitationsRepo.find({
       where: { contractor: { id: contractorId } },
       relations: ['customer', 'contractor', 'personalizedOrder'],
       order: { createdAt: 'DESC' },
     });
-
-    // Фильтруем только приглашения с персонализированными заказами
-    return invitations.filter(invitation => invitation.personalizedOrder);
   }
 
   // Получение приглашений для заказчика
   async getCustomerInvitations(customerId: string) {
-    const invitations = await this.invitationsRepo.find({
+    return this.invitationsRepo.find({
       where: { customer: { id: customerId } },
       relations: ['customer', 'contractor', 'personalizedOrder'],
       order: { createdAt: 'DESC' },
     });
-
-    // Фильтруем только приглашения с персонализированными заказами
-    return invitations.filter(invitation => invitation.personalizedOrder);
   }
 
   // Принятие приглашения
