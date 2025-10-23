@@ -1,5 +1,6 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
+import { PersonalizedOrder } from './personalized-order.entity';
 
 export enum InvitationStatus {
   PENDING = 'pending',           // Ожидает ответа
@@ -25,6 +26,11 @@ export class Invitation {
   // ID персонализированного заказа
   @Column()
   personalizedOrderId!: string;
+
+  // Связь с персонализированным заказом
+  @ManyToOne(() => PersonalizedOrder, { eager: true })
+  @JoinColumn({ name: 'personalizedOrderId' })
+  personalizedOrder!: PersonalizedOrder;
 
   // Статус приглашения
   @Column({ type: 'enum', enum: InvitationStatus, default: InvitationStatus.PENDING })
