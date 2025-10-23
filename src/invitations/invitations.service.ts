@@ -132,12 +132,14 @@ export class InvitationsService {
       await this.personalizedOrdersRepo.save(personalizedOrder);
     }
 
-    // Создаем холд платежа
-    await this.paymentHoldService.createHold({
-      personalizedOrderId: invitation.personalizedOrderId,
-      customerId: invitation.customer.id,
-      amount: personalizedOrder?.budget || 0,
-    });
+    // Создаем холд платежа (только если есть персонализированный заказ)
+    if (invitation.personalizedOrderId && personalizedOrder) {
+      await this.paymentHoldService.createHold({
+        personalizedOrderId: invitation.personalizedOrderId,
+        customerId: invitation.customer.id,
+        amount: personalizedOrder.budget,
+      });
+    }
 
     // Отправляем уведомление заказчику
     await this.notificationsService.createNotification({
