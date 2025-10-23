@@ -24,13 +24,13 @@ export class Invitation {
   contractor!: User;
 
   // ID персонализированного заказа
-  @Column()
-  personalizedOrderId!: string;
+  @Column({ nullable: true })
+  personalizedOrderId?: string;
 
   // Связь с персонализированным заказом
-  @ManyToOne(() => PersonalizedOrder, { eager: true })
+  @ManyToOne(() => PersonalizedOrder, { eager: true, nullable: true })
   @JoinColumn({ name: 'personalizedOrderId' })
-  personalizedOrder!: PersonalizedOrder;
+  personalizedOrder?: PersonalizedOrder;
 
   // Статус приглашения
   @Column({ type: 'enum', enum: InvitationStatus, default: InvitationStatus.PENDING })
