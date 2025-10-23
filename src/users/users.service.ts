@@ -76,7 +76,7 @@ export class UsersService {
       case ContractorLevel.PROFESSIONAL:
         return {
           label: 'Профессионал',
-          color: '#2196F3', 
+          color: '#2196F3',
           commission: 0.12,
           minOrders: 150,
           maxOrders: 299
@@ -98,6 +98,126 @@ export class UsersService {
           maxOrders: 149
         };
     }
+  }
+
+  // Поиск исполнителей по фильтрам
+  async searchContractors(filters: {
+    city?: string;
+    district?: string;
+    metro?: string;
+    street?: string;
+    keywords?: string;
+    minRating?: number;
+    minOrdersCompleted?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    serviceTypes?: string[];
+    availability?: string;
+  }) {
+    const queryBuilder = this.usersRepo.createQueryBuilder('user')
+      .where('user.role = :role', { role: UserRole.CONTRACTOR })
+      .andWhere('user.verified = :verified', { verified: true });
+
+    // Фильтр по городу
+    if (filters.city) {
+      queryBuilder.andWhere('user.city = :city', { city: filters.city });
+    }
+
+    // Фильтр по району
+    if (filters.district) {
+      queryBuilder.andWhere('user.district = :district', { district: filters.district });
+    }
+
+    // Фильтр по метро
+    if (filters.metro) {
+      queryBuilder.andWhere('user.metro = :metro', { metro: filters.metro });
+    }
+
+    // Фильтр по улице
+    if (filters.street) {
+      queryBuilder.andWhere('user.street ILIKE :street', { street: `%${filters.street}%` });
+    }
+
+    // Поиск по ключевым словам
+    if (filters.keywords) {
+      queryBuilder.andWhere(
+        '(user.fullName ILIKE :keywords OR user.street ILIKE :keywords OR user.metro ILIKE :keywords)',
+        { keywords: `%${filters.keywords}%` }
+      );
+    }
+
+    // Фильтр по рейтингу
+    if (filters.minRating) {
+      queryBuilder.andWhere('user.rating >= :minRating', { minRating: filters.minRating });
+    }
+
+    // Фильтр по количеству выполненных заказов
+    if (filters.minOrdersCompleted) {
+      queryBuilder.andWhere('user.ordersCompleted >= :minOrdersCompleted', { 
+        minOrdersCompleted: filters.minOrdersCompleted 
+      });
+    }
+
+    // Сортировка по рейтингу и количеству заказов
+    queryBuilder.orderBy('user.rating', 'DESC')
+      .addOrderBy('user.ordersCompleted', 'DESC');
+
+    const [users, total] = await queryBuilder
+      .select([
+        'user.id',
+        'user.fullName',
+        'user.avatar',
+        'user.rating',
+        'user.reviewsCount',
+        'user.ordersCompleted',
+        'user.city',
+        'user.district',
+        'user.metro',
+        'user.street',
+        'user.contractorLevel',
+        'user.verified'
+      ])
+      .getManyAndCount();
+
+    return {
+      users,
+      total,
+      filters
+    };
+  }
+
+  // Получить список районов для фильтра
+  async getDistricts(city?: string) {
+    const queryBuilder = this.usersRepo.createQueryBuilder('user')
+      .select('DISTINCT user.district', 'district')
+      .where('user.role = :role', { role: UserRole.CONTRACTOR })
+      .andWhere('user.district IS NOT NULL');
+
+    if (city) {
+      queryBuilder.andWhere('user.city = :city', { city });
+    }
+
+    const result = await queryBuilder.getRawMany();
+    return result.map(r => r.district).filter(Boolean);
+  }
+
+  // Получить список метро для фильтра
+  async getMetroStations(city?: string, district?: string) {
+    const queryBuilder = this.usersRepo.createQueryBuilder('user')
+      .select('DISTINCT user.metro', 'metro')
+      .where('user.role = :role', { role: UserRole.CONTRACTOR })
+      .andWhere('user.metro IS NOT NULL');
+
+    if (city) {
+      queryBuilder.andWhere('user.city = :city', { city });
+    }
+
+    if (district) {
+      queryBuilder.andWhere('user.district = :district', { district });
+    }
+
+    const result = await queryBuilder.getRawMany();
+    return result.map(r => r.metro).filter(Boolean);
   }
 }
 

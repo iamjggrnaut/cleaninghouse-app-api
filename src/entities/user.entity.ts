@@ -35,6 +35,32 @@ export class User {
   @Column({ nullable: true })
   city?: string;
 
+  // Детальные адресные поля
+  @Column({ nullable: true })
+  district?: string; // Район: "ЦАО", "САО", "СВАО"
+
+  @Column({ nullable: true })
+  metro?: string; // Ближайшее метро: "Пушкинская", "Тверская"
+
+  @Column({ nullable: true })
+  street?: string; // Улица: "Тверская улица"
+
+  @Column({ nullable: true })
+  house?: string; // Дом: "1"
+
+  @Column({ nullable: true })
+  apartment?: string; // Квартира: "10"
+
+  @Column({ nullable: true })
+  postalCode?: string; // Почтовый индекс: "125009"
+
+  // Зона обслуживания (только для исполнителей)
+  @Column({ type: 'simple-array', nullable: true })
+  serviceAreas?: string[]; // Районы обслуживания: ["ЦАО", "САО"]
+
+  @Column({ type: 'int', nullable: true })
+  serviceRadius?: number; // Радиус обслуживания в км
+
   // Статус для исполнителей (самозанятый/ИП)
   @Column({ nullable: true })
   status?: 'self_employed' | 'individual_entrepreneur';
