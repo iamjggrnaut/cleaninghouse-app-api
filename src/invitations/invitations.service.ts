@@ -84,7 +84,7 @@ export class InvitationsService {
   async getContractorInvitations(contractorId: string) {
     return this.invitationsRepo.find({
       where: { contractor: { id: contractorId } },
-      relations: ['customer', 'contractor'],
+      relations: ['customer', 'contractor', 'personalizedOrder'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -93,7 +93,7 @@ export class InvitationsService {
   async getCustomerInvitations(customerId: string) {
     return this.invitationsRepo.find({
       where: { customer: { id: customerId } },
-      relations: ['customer', 'contractor'],
+      relations: ['customer', 'contractor', 'personalizedOrder'],
       order: { createdAt: 'DESC' },
     });
   }

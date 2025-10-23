@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест системы поиска</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #2196F3;
+            margin-top: 0;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Тест системы поиска исполнителей</h1>
+        
+        <div class="test-section">
+            <h3>1. Создание тестовых исполнителей</h3>
+            <button onclick="createTestData()">Создать тестовых исполнителей</button>
+            <div id="createResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Тест поиска</h3>
+            <div>
+                <label>Город:</label>
+                <select id="cityFilter">
+                    <option value="">Все города</option>
+                    <option value="Москва">Москва</option>
+                    <option value="Санкт-Петербург">Санкт-Петербург</option>
+                </select>
+                
+                <label>Район:</label>
+                <select id="districtFilter">
+                    <option value="">Все районы</option>
+                    <option value="ЦАО">ЦАО</option>
+                    <option value="САО">САО</option>
+                    <option value="СВАО">СВАО</option>
+                </select>
+                
+                <label>Метро:</label>
+                <select id="metroFilter">
+                    <option value="">Все метро</option>
+                    <option value="Пушкинская">Пушкинская</option>
+                    <option value="Сокольники">Сокольники</option>
+                    <option value="ВДНХ">ВДНХ</option>
+                </select>
+                
+                <label>Минимальный рейтинг:</label>
+                <input type="number" id="minRating" min="0" max="5" step="0.1" placeholder="0">
+            </div>
+            <button onclick="testSearch()">Поиск исполнителей</button>
+            <div id="searchResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Тест фильтров</h3>
+            <button onclick="testDistricts()">Получить районы</button>
+            <button onclick="testMetro()">Получить метро</button>
+            <div id="filtersResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Статус сервера</h3>
+            <button onclick="checkServerStatus()">Проверить сервер</button>
+            <div id="statusResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function createTestData() {
+            const resultDiv = document.getElementById('createResult');
+            resultDiv.textContent = 'Создание тестовых исполнителей...';
+            
+            const testContractors = [
+                {
+                    fullName: 'Анна Петрова',
+                    phone: '+79001234567',
+                    email: 'anna.petrova@test.com',
+                    password: 'password123',
+                    role: 'contractor',
+                    city: 'Москва',
+                    district: 'ЦАО',
+                    metro: 'Пушкинская',
+                    street: 'Тверская улица',
+                    house: '1',
+                    rating: 4.8,
+                    ordersCompleted: 45,
+                    contractorLevel: 'professional',
+                    verified: true,
+                    status: 'self_employed'
+                },
+                {
+                    fullName: 'Михаил Смирнов',
+                    phone: '+79001234568',
+                    email: 'mikhail.smirnov@test.com',
+                    password: 'password123',
+                    role: 'contractor',
+                    city: 'Москва',
+                    district: 'САО',
+                    metro: 'Сокольники',
+                    street: 'Сокольническая улица',
+                    house: '15',
+                    rating: 4.6,
+                    ordersCompleted: 23,
+                    contractorLevel: 'specialist',
+                    verified: true,
+                    status: 'individual_entrepreneur'
+                },
+                {
+                    fullName: 'Елена Козлова',
+                    phone: '+79001234569',
+                    email: 'elena.kozlova@test.com',
+                    password: 'password123',
+                    role: 'contractor',
+                    city: 'Москва',
+                    district: 'СВАО',
+                    metro: 'ВДНХ',
+                    street: 'Проспект Мира',
+                    house: '100',
+                    rating: 4.9,
+                    ordersCompleted: 78,
+                    contractorLevel: 'expert',
+                    verified: true,
+                    status: 'self_employed'
+                }
+            ];
+
+            let results = [];
+            for (const contractor of testContractors) {
+                const result = await makeRequest(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    body: JSON.stringify(contractor)
+                });
+                
+                if (result.success) {
+                    results.push(`✅ ${contractor.fullName} - создан успешно`);
+                } else if (result.data?.message?.includes('уже существует')) {
+                    results.push(`⚠️ ${contractor.fullName} - уже существует`);
+                } else {
+                    results.push(`❌ ${contractor.fullName} - ошибка: ${result.data?.message || result.error}`);
+                }
+            }
+            
+            resultDiv.textContent = results.join('\n');
+            resultDiv.className = 'result success';
+        }
+
+        async function testSearch() {
+            const resultDiv = document.getElementById('searchResult');
+            resultDiv.textContent = 'Поиск исполнителей...';
+            
+            const city = document.getElementById('cityFilter').value;
+            const district = document.getElementById('districtFilter').value;
+            const metro = document.getElementById('metroFilter').value;
+            const minRating = document.getElementById('minRating').value;
+            
+            let url = `${API_BASE}/users/search/contractors?`;
+            const params = [];
+            if (city) params.push(`city=${encodeURIComponent(city)}`);
+            if (district) params.push(`district=${encodeURIComponent(district)}`);
+            if (metro) params.push(`metro=${encodeURIComponent(metro)}`);
+            if (minRating) params.push(`minRating=${minRating}`);
+            
+            url += params.join('&');
+            
+            const result = await makeRequest(url);
+            
+            if (result.success) {
+                const data = result.data;
+                resultDiv.textContent = `Найдено: ${data.total} исполнителей\n\n${JSON.stringify(data.data, null, 2)}`;
+                resultDiv.className = 'result success';
+            } else {
+                resultDiv.textContent = `Ошибка: ${result.error || result.data?.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testDistricts() {
+            const resultDiv = document.getElementById('filtersResult');
+            resultDiv.textContent = 'Получение районов...';
+            
+            const city = document.getElementById('cityFilter').value;
+            let url = `${API_BASE}/users/filters/districts`;
+            if (city) url += `?city=${encodeURIComponent(city)}`;
+            
+            const result = await makeRequest(url);
+            
+            if (result.success) {
+                resultDiv.textContent = `Районы: ${JSON.stringify(result.data.data, null, 2)}`;
+                resultDiv.className = 'result success';
+            } else {
+                resultDiv.textContent = `Ошибка: ${result.error || result.data?.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testMetro() {
+            const resultDiv = document.getElementById('filtersResult');
+            resultDiv.textContent = 'Получение метро...';
+            
+            const city = document.getElementById('cityFilter').value;
+            const district = document.getElementById('districtFilter').value;
+            let url = `${API_BASE}/users/filters/metro`;
+            const params = [];
+            if (city) params.push(`city=${encodeURIComponent(city)}`);
+            if (district) params.push(`district=${encodeURIComponent(district)}`);
+            if (params.length) url += '?' + params.join('&');
+            
+            const result = await makeRequest(url);
+            
+            if (result.success) {
+                resultDiv.textContent = `Метро: ${JSON.stringify(result.data.data, null, 2)}`;
+                resultDiv.className = 'result success';
+            } else {
+                resultDiv.textContent = `Ошибка: ${result.error || result.data?.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function checkServerStatus() {
+            const resultDiv = document.getElementById('statusResult');
+            resultDiv.textContent = 'Проверка сервера...';
+            
+            const result = await makeRequest(`${API_BASE}/users/specialists`);
+            
+            if (result.success) {
+                resultDiv.textContent = `✅ Сервер работает!\nСтатус: ${result.status}\nДанные: ${JSON.stringify(result.data, null, 2)}`;
+                resultDiv.className = 'result success';
+            } else {
+                resultDiv.textContent = `❌ Сервер не отвечает\nОшибка: ${result.error}`;
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>
