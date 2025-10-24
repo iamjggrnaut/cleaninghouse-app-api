@@ -19,6 +19,14 @@ export class OrdersService {
     return this.ordersRepo.find({ order: { createdAt: 'DESC' } as any });
   }
 
+  findCustomerOrders(customerId: string) {
+    return this.ordersRepo.find({ 
+      where: { customer: { id: customerId } },
+      relations: ['customer', 'contractor'],
+      order: { createdAt: 'DESC' } as any 
+    });
+  }
+
   findById(id: string) {
     return this.ordersRepo.findOne({ where: { id } });
   }

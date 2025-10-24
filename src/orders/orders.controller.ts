@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards, Request } from '@nestjs/common';
 import { OrdersService } from './orders.service';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 
 @Controller('orders')
 export class OrdersController {
@@ -8,6 +9,13 @@ export class OrdersController {
   @Get()
   list() {
     return this.orders.findAll().then((data) => ({ success: true, data }));
+  }
+
+  @Get('customer')
+  @UseGuards(JwtAuthGuard)
+  getCustomerOrders(@Request() req) {
+    const customerId = req.user.id;
+    return this.orders.findCustomerOrders(customerId).then((data) => ({ success: true, data }));
   }
 
   @Get(':id')
