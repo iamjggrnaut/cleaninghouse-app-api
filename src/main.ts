@@ -26,10 +26,6 @@ async function bootstrap() {
     prefix: '/static/',
   });
   
-  // Принудительная инициализация YooKassaService для проверки переменных окружения
-  const yooKassaService = app.get('YooKassaService');
-  console.log('🔍 YooKassaService инициализирован при запуске сервера');
-
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
   // console.log(`🚀 Server running on http://localhost:${process.env.PORT ?? 3000, '0.0.0.0'}`);
   console.log(`🚀 Server running on http://localhost:${process.env.PORT ?? 3000}`);
