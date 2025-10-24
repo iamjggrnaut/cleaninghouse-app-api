@@ -36,10 +36,30 @@ export class YooKassaService {
   private readonly returnUrl: string;
 
   constructor(private configService: ConfigService) {
-    this.shopId = this.configService.get<string>('YOOKASSA_SHOP_ID') || '1187292';
-    this.secretKey = this.configService.get<string>('YOOKASSA_SECRET_KEY') || 'test_KW0GVWw98vJfPNqJXkSY7vmup_j-Let-UXPr6RQZHdk';
-    this.baseUrl = this.configService.get<string>('YOOKASSA_BASE_URL') || 'https://api.yookassa.ru/v3';
-    this.returnUrl = this.configService.get<string>('YOOKASSA_RETURN_URL') || 'https://app.cleaninghouse-premium.ru/payment/return';
+    // Дебаг: проверяем переменные окружения
+    const envShopId = this.configService.get<string>('YOOKASSA_SHOP_ID');
+    const envSecretKey = this.configService.get<string>('YOOKASSA_SECRET_KEY');
+    const envBaseUrl = this.configService.get<string>('YOOKASSA_BASE_URL');
+    const envReturnUrl = this.configService.get<string>('YOOKASSA_RETURN_URL');
+    
+    console.log('🔍 YooKassaService: Переменные окружения:', {
+      YOOKASSA_SHOP_ID: envShopId,
+      YOOKASSA_SECRET_KEY: envSecretKey ? `${envSecretKey.substring(0, 10)}...` : 'undefined',
+      YOOKASSA_BASE_URL: envBaseUrl,
+      YOOKASSA_RETURN_URL: envReturnUrl
+    });
+    
+    this.shopId = envShopId || '1187292';
+    this.secretKey = envSecretKey || 'test_KW0GVWw98vJfPNqJXkSY7vmup_j-Let-UXPr6RQZHdk';
+    this.baseUrl = envBaseUrl || 'https://api.yookassa.ru/v3';
+    this.returnUrl = envReturnUrl || 'https://app.cleaninghouse-premium.ru/payment/return';
+    
+    console.log('🔍 YooKassaService: Финальные значения:', {
+      shopId: this.shopId,
+      secretKey: `${this.secretKey.substring(0, 10)}...`,
+      baseUrl: this.baseUrl,
+      returnUrl: this.returnUrl
+    });
   }
 
   // Создание холда платежа
