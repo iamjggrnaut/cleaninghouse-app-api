@@ -10,6 +10,9 @@ import { OrderResponse } from './entities/order-response.entity';
 import { Review } from './entities/review.entity';
 import { Promo } from './entities/promo.entity';
 import { PaymentMethod } from './payments/payment-method.entity';
+import { Payment } from './payments/payment.entity';
+import { Payout } from './payments/payout.entity';
+import { Transaction } from './payments/transaction.entity';
 // Новые сущности для приглашений
 import { Invitation } from './entities/invitation.entity';
 import { PersonalizedOrder } from './entities/personalized-order.entity';
@@ -42,7 +45,7 @@ import { PersonalizedOrdersModule } from './personalized-orders/personalized-ord
         username: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASSWORD || 'React2022',
         database: process.env.DB_NAME || 'cleaninghouse',
-        entities: [User, Order, Notification, OrderResponse, Review, Promo, PaymentMethod, Invitation, PersonalizedOrder, PaymentHold],
+        entities: [User, Order, Notification, OrderResponse, Review, Promo, PaymentMethod, Payment, Payout, Transaction, Invitation, PersonalizedOrder, PaymentHold],
         synchronize: true,
       }),
     }),
