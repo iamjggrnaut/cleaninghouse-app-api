@@ -21,10 +21,15 @@ export class OrderResponsesController {
   @Post()
   async createResponse(@Req() req: any, @Body() body: any) {
     const contractorId = req.user.userId;
+    console.log('🔍 OrderResponsesController.createResponse: contractorId:', contractorId);
+    console.log('🔍 OrderResponsesController.createResponse: body:', body);
+    
     const response = await this.orderResponsesService.createResponse({
       ...body,
       contractorId,
     });
+    
+    console.log('🔍 OrderResponsesController.createResponse: response created:', response.id);
     return { success: true, data: response };
   }
 

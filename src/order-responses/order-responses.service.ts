@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrderResponse, ResponseStatus } from '../entities/order-response.entity';
-import { Order } from '../entities/order.entity';
+import { Order, OrderStatus } from '../entities/order.entity';
 import { User } from '../entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -76,7 +76,7 @@ export class OrderResponsesService {
     // Изменяем статус заказа на "ожидает принятия"
     console.log('🔍 OrderResponsesService.createResponse: Изменяем статус заказа', order.id, 'на pending');
     const updateResult = await this.ordersRepo.update(order.id, { 
-      status: 'pending' as any
+      status: OrderStatus.PENDING_ACCEPTANCE
     });
     console.log('🔍 OrderResponsesService.createResponse: Результат обновления:', updateResult);
 
