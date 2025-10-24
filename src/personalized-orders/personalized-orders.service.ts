@@ -46,8 +46,9 @@ export class PersonalizedOrdersService {
     // Рассчитываем комиссии на основе уровня исполнителя
     const contractorLevel = contractor.contractorLevel || 'specialist';
     const platformCommission = this.getPlatformCommission(contractorLevel);
-    const platformFee = data.budget * platformCommission;
-    const contractorFee = data.budget - platformFee;
+    const budget = Number(data.budget); // Убеждаемся, что budget - это число
+    const platformFee = budget * platformCommission;
+    const contractorFee = budget - platformFee;
 
     // Создаем персонализированный заказ
     const personalizedOrder = this.personalizedOrdersRepo.create({
@@ -55,7 +56,7 @@ export class PersonalizedOrdersService {
       contractor,
       title: data.title,
       description: data.description,
-      budget: data.budget,
+      budget: budget,
       fullAddress: data.fullAddress,
       maskedAddress,
       customerPhone: data.customerPhone,

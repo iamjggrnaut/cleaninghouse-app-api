@@ -128,10 +128,18 @@ export class InvitationsService {
 
     // Создаем холд платежа (только если есть персонализированный заказ)
     if (invitation.personalizedOrderId && personalizedOrder) {
+      console.log('🔍 InvitationsService.acceptInvitation: Создаем холд платежа', {
+        personalizedOrderId: invitation.personalizedOrderId,
+        customerId: invitation.customer.id,
+        originalBudget: personalizedOrder.budget,
+        budgetType: typeof personalizedOrder.budget,
+        convertedAmount: Number(personalizedOrder.budget)
+      });
+      
       await this.paymentHoldService.createHold({
         personalizedOrderId: invitation.personalizedOrderId,
         customerId: invitation.customer.id,
-        amount: personalizedOrder.budget,
+        amount: Number(personalizedOrder.budget),
       });
     }
 
