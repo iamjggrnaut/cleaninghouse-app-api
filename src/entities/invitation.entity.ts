@@ -6,7 +6,9 @@ export enum InvitationStatus {
   PENDING = 'pending',           // Ожидает ответа
   ACCEPTED = 'accepted',          // Принято
   REJECTED = 'rejected',          // Отклонено
-  COMPLETED = 'completed',        // Завершено
+  IN_PROGRESS = 'in_progress',    // В работе (исполнитель принял)
+  COMPLETED = 'completed',        // Завершено исполнителем
+  CONFIRMED = 'confirmed',        // Подтверждено заказчиком
   CANCELLED = 'cancelled',        // Отменено
 }
 

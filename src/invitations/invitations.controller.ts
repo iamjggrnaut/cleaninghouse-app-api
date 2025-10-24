@@ -67,4 +67,28 @@ export class InvitationsController {
     const invitation = await this.invitationsService.cancelInvitation(invitationId, customerId);
     return { success: true, data: invitation };
   }
+
+  // Отказ от приглашения исполнителем (отмена холда)
+  @Put(':id/decline')
+  async declineInvitation(@Req() req: any, @Param('id') invitationId: string) {
+    const contractorId = req.user.userId;
+    const invitation = await this.invitationsService.declineInvitation(invitationId, contractorId);
+    return { success: true, data: invitation };
+  }
+
+  // Завершение заказа исполнителем
+  @Put(':id/complete')
+  async completeInvitation(@Req() req: any, @Param('id') invitationId: string) {
+    const contractorId = req.user.userId;
+    const invitation = await this.invitationsService.completeInvitation(invitationId, contractorId);
+    return { success: true, data: invitation };
+  }
+
+  // Подтверждение заказа заказчиком (списание средств)
+  @Put(':id/confirm')
+  async confirmInvitation(@Req() req: any, @Param('id') invitationId: string) {
+    const customerId = req.user.userId;
+    const invitation = await this.invitationsService.confirmInvitation(invitationId, customerId);
+    return { success: true, data: invitation };
+  }
 }

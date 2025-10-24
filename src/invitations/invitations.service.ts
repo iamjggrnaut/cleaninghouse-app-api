@@ -227,4 +227,131 @@ export class InvitationsService {
 
     return invitation;
   }
+
+  // Отказ от приглашения исполнителем (отмена холда)
+  async declineInvitation(invitationId: string, contractorId: string): Promise<Invitation> {
+    const invitation = await this.invitationsRepo.findOne({
+      where: { id: invitationId },
+      relations: ['customer', 'contractor', 'personalizedOrder'],
+    });
+
+    if (!invitation) throw new NotFoundException('Invitation not found');
+    if (invitation.contractor.id !== contractorId) {
+      throw new BadRequestException('Not authorized to decline this invitation');
+    }
+    if (invitation.status !== InvitationStatus.ACCEPTED) {
+      throw new BadRequestException('Invitation is not accepted');
+    }
+
+    // Отменяем холд платежа
+    if (invitation.personalizedOrderId) {
+      await this.paymentHoldService.cancelHold(invitation.personalizedOrderId);
+    }
+
+    // Обновляем статусы
+    invitation.status = InvitationStatus.CANCELLED;
+    if (invitation.personalizedOrder) {
+      invitation.personalizedOrder.status = PersonalizedOrderStatus.CANCELLED;
+      await this.personalizedOrdersRepo.save(invitation.personalizedOrder);
+    }
+    await this.invitationsRepo.save(invitation);
+
+    // Отправляем уведомление заказчику
+    await this.notificationsService.createNotification({
+      userId: invitation.customer.id,
+      type: NotificationType.INVITATION_CANCELLED,
+      title: 'Исполнитель отказался от заказа',
+      message: `Исполнитель ${invitation.contractor.fullName} отказался от выполнения заказа. Деньги возвращены на ваш счет.`,
+      data: {
+        invitationId: invitation.id,
+        contractorName: invitation.contractor.fullName,
+        orderTitle: invitation.personalizedOrder?.title,
+      },
+    });
+
+    return invitation;
+  }
+
+  // Завершение заказа исполнителем
+  async completeInvitation(invitationId: string, contractorId: string): Promise<Invitation> {
+    const invitation = await this.invitationsRepo.findOne({
+      where: { id: invitationId },
+      relations: ['customer', 'contractor', 'personalizedOrder'],
+    });
+
+    if (!invitation) throw new NotFoundException('Invitation not found');
+    if (invitation.contractor.id !== contractorId) {
+      throw new BadRequestException('Not authorized to complete this invitation');
+    }
+    if (invitation.status !== InvitationStatus.ACCEPTED) {
+      throw new BadRequestException('Invitation is not accepted');
+    }
+
+    // Обновляем статусы
+    invitation.status = InvitationStatus.COMPLETED;
+    if (invitation.personalizedOrder) {
+      invitation.personalizedOrder.status = PersonalizedOrderStatus.COMPLETED;
+      await this.personalizedOrdersRepo.save(invitation.personalizedOrder);
+    }
+    await this.invitationsRepo.save(invitation);
+
+    // Отправляем уведомление заказчику
+    await this.notificationsService.createNotification({
+      userId: invitation.customer.id,
+      type: NotificationType.PERSONALIZED_ORDER_COMPLETED,
+      title: 'Заказ завершен',
+      message: `Исполнитель ${invitation.contractor.fullName} завершил ваш заказ. Подтвердите выполнение для списания средств.`,
+      data: {
+        invitationId: invitation.id,
+        contractorName: invitation.contractor.fullName,
+        orderTitle: invitation.personalizedOrder?.title,
+      },
+    });
+
+    return invitation;
+  }
+
+  // Подтверждение заказа заказчиком (списание средств)
+  async confirmInvitation(invitationId: string, customerId: string): Promise<Invitation> {
+    const invitation = await this.invitationsRepo.findOne({
+      where: { id: invitationId },
+      relations: ['customer', 'contractor', 'personalizedOrder'],
+    });
+
+    if (!invitation) throw new NotFoundException('Invitation not found');
+    if (invitation.customer.id !== customerId) {
+      throw new BadRequestException('Not authorized to confirm this invitation');
+    }
+    if (invitation.status !== InvitationStatus.COMPLETED) {
+      throw new BadRequestException('Invitation is not completed');
+    }
+
+    // Списываем средства с холда
+    if (invitation.personalizedOrderId) {
+      await this.paymentHoldService.releaseHold(invitation.personalizedOrderId);
+    }
+
+    // Обновляем статусы
+    invitation.status = InvitationStatus.CONFIRMED;
+    if (invitation.personalizedOrder) {
+      invitation.personalizedOrder.status = PersonalizedOrderStatus.CONFIRMED;
+      await this.personalizedOrdersRepo.save(invitation.personalizedOrder);
+    }
+    await this.invitationsRepo.save(invitation);
+
+    // Отправляем уведомление исполнителю
+    await this.notificationsService.createNotification({
+      userId: invitation.contractor.id,
+      type: NotificationType.PAYMENT_HOLD_RELEASED,
+      title: 'Оплата получена',
+      message: `Заказчик подтвердил завершение заказа. Оплата поступила на ваш счет.`,
+      data: {
+        invitationId: invitation.id,
+        customerName: invitation.customer.fullName,
+        orderTitle: invitation.personalizedOrder?.title,
+      },
+    });
+
+    return invitation;
+  }
 }

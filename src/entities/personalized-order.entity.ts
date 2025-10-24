@@ -4,7 +4,8 @@ import { User } from './user.entity';
 export enum PersonalizedOrderStatus {
   PENDING = 'pending',           // Ожидает ответа исполнителя
   ACTIVE = 'active',             // Принято, в работе
-  COMPLETED = 'completed',       // Завершено
+  COMPLETED = 'completed',       // Завершено исполнителем
+  CONFIRMED = 'confirmed',       // Подтверждено заказчиком
   CANCELLED = 'cancelled',       // Отменено
 }
 
