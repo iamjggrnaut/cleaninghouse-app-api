@@ -75,8 +75,7 @@ export class OrderResponsesService {
 
     // Изменяем статус заказа на "ожидает принятия"
     await this.ordersRepo.update(order.id, { 
-      status: 'pending' as any,
-      contractorId: contractor.id 
+      status: 'pending' as any
     });
 
     // Уведомление клиенту о новом отклике
