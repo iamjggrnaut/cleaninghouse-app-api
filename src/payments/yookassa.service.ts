@@ -108,6 +108,13 @@ export class YooKassaService {
   // Подтверждение холда (списание средств)
   async captureHold(paymentId: string): Promise<YooKassaPayment> {
     try {
+      console.log('🔍 YooKassaService.captureHold: Параметры:', {
+        paymentId,
+        baseUrl: this.baseUrl,
+        shopId: this.shopId,
+        url: `${this.baseUrl}/payments/${paymentId}/capture`
+      });
+
       const response = await axios.post(
         `${this.baseUrl}/payments/${paymentId}/capture`,
         {},
@@ -120,6 +127,7 @@ export class YooKassaService {
         }
       );
 
+      console.log('🔍 YooKassaService.captureHold: Успешный ответ:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('Ошибка подтверждения холда в YooKassa:', error.response?.data || error.message);

@@ -62,6 +62,18 @@ export class PaymentHoldService {
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 дней
       });
 
+      // Дебаг: проверяем ответ от YooKassa
+      console.log('🔍 PaymentHoldService.createHold: Ответ от YooKassa:', {
+        hasId: !!yooKassaPayment.id,
+        id: yooKassaPayment.id,
+        status: yooKassaPayment.status,
+        fullResponse: JSON.stringify(yooKassaPayment, null, 2)
+      });
+
+      if (!yooKassaPayment.id) {
+        throw new BadRequestException('YooKassa не вернул ID платежа');
+      }
+
       // Создаем холд платежа в БД
       const paymentHold = this.paymentHoldsRepo.create({
         personalizedOrderId: data.personalizedOrderId,
@@ -109,9 +121,23 @@ export class PaymentHoldService {
 
     if (!hold) throw new NotFoundException('Active hold not found');
 
+    // Дебаг: проверяем сохраненный paymentId
+    console.log('🔍 PaymentHoldService.releaseHold: Данные холда:', {
+      holdId: hold.id,
+      paymentId: hold.paymentId,
+      holdIdField: hold.holdId,
+      status: hold.status,
+      amount: hold.amount
+    });
+
+    if (!hold.paymentId) {
+      throw new BadRequestException('Payment ID не найден в холде');
+    }
+
     try {
       // Подтверждаем холд в YooKassa (списываем средства)
-      const yooKassaPayment = await this.yooKassaService.captureHold(hold.paymentId!);
+      console.log('🔍 PaymentHoldService.releaseHold: Вызываем captureHold с paymentId:', hold.paymentId);
+      const yooKassaPayment = await this.yooKassaService.captureHold(hold.paymentId);
 
       if (!this.yooKassaService.isPaymentSuccessful(yooKassaPayment)) {
         throw new BadRequestException('Не удалось списать средства с карты');
