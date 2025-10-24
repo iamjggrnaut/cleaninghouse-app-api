@@ -90,13 +90,38 @@ export class AuthService {
   }
 
   async login(data: { email: string; password: string }) {
+    console.log('🔍 AuthService.login: Получены данные для входа:', {
+      email: data.email,
+      passwordLength: data.password?.length
+    });
+
     const user = await this.usersRepo.findOne({
       where: { email: data.email },
       select: ['id', 'email', 'phone', 'fullName', 'role', 'passwordHash', 'rating', 'reviewsCount', 'ordersCompleted', 'avatar', 'city', 'status'],
     });
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+
+    console.log('🔍 AuthService.login: Найден пользователь:', {
+      found: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      hasPasswordHash: !!user?.passwordHash
+    });
+
+    if (!user) {
+      console.log('❌ AuthService.login: Пользователь не найден');
+      throw new UnauthorizedException('Неверные учетные данные');
+    }
+
+    console.log('🔍 AuthService.login: Проверяем пароль...');
     const match = await bcrypt.compare(data.password, user.passwordHash);
-    if (!match) throw new UnauthorizedException('Invalid credentials');
+    console.log('🔍 AuthService.login: Результат проверки пароля:', match);
+
+    if (!match) {
+      console.log('❌ AuthService.login: Неверный пароль');
+      throw new UnauthorizedException('Неверные учетные данные');
+    }
+
+    console.log('✅ AuthService.login: Успешная авторизация');
     const tokens = this.issueTokens(user);
     return { user, ...tokens };
   }

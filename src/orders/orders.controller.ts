@@ -12,7 +12,12 @@ export class OrdersController {
 
   @Get(':id')
   get(@Param('id') id: string) {
-    return this.orders.findById(id).then((data) => ({ success: true, data }));
+    return this.orders.findById(id).then((data) => {
+      if (!data) {
+        return { success: false, message: 'Order not found' };
+      }
+      return { success: true, data };
+    });
   }
 
   @Post()

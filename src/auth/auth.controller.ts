@@ -13,8 +13,20 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() body: { email: string; password: string }) {
-    const result = await this.auth.login(body);
-    return { success: true, data: result };
+    console.log('🔍 AuthController.login: Получен запрос на вход:', {
+      email: body.email,
+      passwordLength: body.password?.length,
+      hasPassword: !!body.password
+    });
+    
+    try {
+      const result = await this.auth.login(body);
+      console.log('✅ AuthController.login: Успешный вход');
+      return { success: true, data: result };
+    } catch (error) {
+      console.error('❌ AuthController.login: Ошибка входа:', error.message);
+      throw error;
+    }
   }
 
   @Post('refresh')
