@@ -17,6 +17,7 @@ import { EmailModule } from '../email/email.module';
   ],
   providers: [AuthService],
   controllers: [AuthController],
+  exports: [JwtModule],
 })
 export class AuthModule {}
 
