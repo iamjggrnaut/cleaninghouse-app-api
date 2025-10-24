@@ -74,9 +74,11 @@ export class OrderResponsesService {
     const saved = await this.responsesRepo.save(response) as unknown as OrderResponse;
 
     // Изменяем статус заказа на "ожидает принятия"
-    await this.ordersRepo.update(order.id, { 
+    console.log('🔍 OrderResponsesService.createResponse: Изменяем статус заказа', order.id, 'на pending');
+    const updateResult = await this.ordersRepo.update(order.id, { 
       status: 'pending' as any
     });
+    console.log('🔍 OrderResponsesService.createResponse: Результат обновления:', updateResult);
 
     // Уведомление клиенту о новом отклике
     await this.notificationsService.notifyOrderResponse(
@@ -99,11 +101,24 @@ export class OrderResponsesService {
 
   // Получить отклики исполнителя
   async getResponsesByContractor(contractorId: string): Promise<OrderResponse[]> {
-    return this.responsesRepo.find({
+    console.log('🔍 OrderResponsesService.getResponsesByContractor: contractorId:', contractorId);
+    
+    const responses = await this.responsesRepo.find({
       where: { contractorId },
       relations: ['order', 'order.customer'],
       order: { createdAt: 'DESC' as any },
     });
+    
+    console.log('🔍 OrderResponsesService.getResponsesByContractor: found responses:', responses.length);
+    console.log('🔍 OrderResponsesService.getResponsesByContractor: responses details:', responses.map(r => ({
+      id: r.id,
+      orderId: r.orderId,
+      status: r.status,
+      orderStatus: r.order?.status,
+      orderTitle: r.order?.title
+    })));
+    
+    return responses;
   }
 
   // Клиент принимает отклик (назначает исполнителя)

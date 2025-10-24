@@ -41,9 +41,20 @@ export class OrderResponsesController {
   @Get('my-responses')
   async getMyResponses(@Req() req: any) {
     const contractorId = req.user.userId;
+    console.log('🔍 OrderResponsesController.getMyResponses: contractorId:', contractorId);
+    
     const responses = await this.orderResponsesService.getResponsesByContractor(
       contractorId,
     );
+    
+    console.log('🔍 OrderResponsesController.getMyResponses: responses found:', responses.length);
+    console.log('🔍 OrderResponsesController.getMyResponses: responses:', responses.map(r => ({
+      id: r.id,
+      orderId: r.orderId,
+      status: r.status,
+      orderTitle: r.order?.title
+    })));
+    
     return { success: true, data: responses };
   }
 
