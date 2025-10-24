@@ -73,6 +73,12 @@ export class OrderResponsesService {
 
     const saved = await this.responsesRepo.save(response) as unknown as OrderResponse;
 
+    // Изменяем статус заказа на "ожидает принятия"
+    await this.ordersRepo.update(order.id, { 
+      status: 'pending' as any,
+      contractorId: contractor.id 
+    });
+
     // Уведомление клиенту о новом отклике
     await this.notificationsService.notifyOrderResponse(
       order.id,
