@@ -50,9 +50,22 @@ export class YooKassaService {
     expiresAt?: Date;
   }): Promise<YooKassaPayment> {
     try {
+      // Преобразуем amount в число если это строка
+      const amount = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
+      
+      if (isNaN(amount) || amount <= 0) {
+        throw new BadRequestException('Неверная сумма для холда');
+      }
+
+      console.log('🔍 YooKassaService.createHold: Создаем холд', {
+        originalAmount: data.amount,
+        processedAmount: amount,
+        type: typeof data.amount
+      });
+
       const holdRequest: YooKassaHoldRequest = {
         amount: {
-          value: data.amount.toFixed(2),
+          value: amount.toFixed(2),
           currency: 'RUB',
         },
         confirmation: {
