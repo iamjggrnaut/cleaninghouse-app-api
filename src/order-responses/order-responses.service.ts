@@ -219,10 +219,13 @@ export class OrderResponsesService {
     return this.responsesRepo.save(response) as unknown as OrderResponse;
   }
 
-  // Получить количество откликов на заказ
+  // Получить количество откликов на заказ (все отклики, кроме отозванных)
   async getResponsesCount(orderId: string): Promise<number> {
     return this.responsesRepo.count({
-      where: { orderId, status: ResponseStatus.PENDING },
+      where: { 
+        orderId, 
+        status: { $ne: ResponseStatus.WITHDRAWN } as any 
+      },
     });
   }
 }
