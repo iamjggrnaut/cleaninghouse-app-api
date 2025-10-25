@@ -148,7 +148,7 @@ export class OrderResponsesService {
     // Назначаем исполнителя на заказ
     const order = response.order;
     order.contractor = response.contractor;
-    order.status = 'pending_acceptance' as any; // Заказ принят, ожидает начала работы
+    order.status = OrderStatus.ACTIVE; // Заказ принят, в работе
     const updatedOrder = await this.ordersRepo.save(order) as unknown as Order;
 
     // Отклоняем все остальные отклики на этот заказ
